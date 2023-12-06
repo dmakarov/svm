@@ -140,7 +140,7 @@ should not be part of the SVM.
 
 
 # Work area
-(stuff from here will be moved up to proper sections when settles down)
+*(stuff from here will be moved up to proper sections when settles down)*
 
 Load and execute transactions.
 
@@ -181,7 +181,7 @@ Both `LegacyMessage` and `LoadedMessage` consist of
 
 
 
-# Questions
+## Open Questions
 
 1. Many types used to define (transitively) `TransactionBatch` are
    defined in solana-program crate. This crate is part of SDK
@@ -204,7 +204,7 @@ Questions from Lucas' document (to answer here later)
 4. Does `RentState` need an interface? Do we assume all accounts will
    pay rent?
 
-Questions about structure of SVM fron Lucas' document (need to review and answer)
+Questions about structure of SVM from Lucas' document (need to review and answer)
 
 5. Parts that should belong to SVM: 1. Inputs: 1. Accounts 2. Transactions 3. Builtin programs 4. A trait for bank 2. Outputs: 1. Processed transactions
 
