@@ -13,31 +13,31 @@ This document represents specification of the SVM. It covers the API of using SV
 The following possible applications for SVM were collected from potential interested users
 
 - **Transaction execution in Solana Validator**
-    
+
     This is the primary use case for the SVM. It remains a major component of the Solana Validator, but with clear interface and isolated from dependencies on other components.
-    
+
     The SVM is currently viewed as realizing two stages of the Transaction Engine Execution pipeline as described in Solana Architecture documentation [https://docs.solana.com/validator/runtime#execution](https://docs.solana.com/validator/runtime#execution), namely ‘load accounts’ and ‘execute’ stages *(confirmation needed)*
-    
+
 - **SVM Rollups**
-    
+
     Rollups that need to execute the block but don’t need the other components of the validator can benefit from this as it can reduce hardware requirements and decentralize the network. This is especially useful for Ephemeral Rollups since the cost of compute will be higher as a new rollup is created for every user session in applications like gaming.
-    
+
 - **SVM Fraud Proofs for Diet Clients**
-    
+
     A succinct proof of an invalid state transition by the supermajority (SIMD-65)
-    
+
 - **Validator Sidecar for JSON-RPC**
-    
+
     The RPC needs to be separated from the validator, simulateTransaction requires replaying the transactions and have access to necessary account data.
-    
+
 - **SVM-based Avalanche subne**t
-    
+
     The SVM would need to be isolated to run within a subnet since the consensus and networking functionality would rely on Avalanche modules.
-    
+
 - **Modified SVM (SVM+)**
-    
+
     An SVM type with all the current functionality and extended instructions for custom use cases. This would form a superset of the current SVM.
-    
+
 
 It’s not clear at this point whether all these use cases can be satisfied with the same interface to the SVM or different methods of invocation and/or data structures will be required for invocation of the SVM in a specific use case. The use-cases need to be expanded in more descriptive explanations that clearly specify the environment or context in which the SVM operates for each use-case.
 
@@ -100,3 +100,43 @@ Program-runtime is all part of SVM. Nothing should be moved out of there.
 Execution context data structures: `TransactionContext`, `InstructionContext` is defined in SDK, but is truly part of SVM or not?
 
 Is the BpfLoader part of the SVM? It is a program on the blockchain, not necessarily part of the VM?
+
+
+
+Load and execute transactions.
+
+In bank context `load_and_execute_transactions` is called from
+`simulate_transaction` where a single transaction is executed, and
+from `load_execute_and_commit_transactions` which receives a batch of
+transactions from its caller.
+
+Input: `TransactionBatch`
+
+`TransactionBatch` contains
+    - vector of `Result` lock_results -- purpose?
+    - a reference to Bank -- need to decouple from Bank
+    - a slice of `SanitizedTransaction` wrapped in copy on write
+    - a boolean flag `needs_unlock`   -- purpose?
+
+Of the above we should need only the slice of
+`SanitizedTransaction`. Let's analyze it next
+
+`SanitizedTransaction` contains
+    - a SanitizedMessage  -- explain
+    - a Hash of the message
+    - a boolean flag `is_simple_vote_tx` -- explain
+    - a vector of `Signature`  -- explain which signatures are in this vector
+
+`SanitizedMessage` is an enum with two kinds of messages
+    - `LegacyMessage`
+    - and `LoadedMessage`
+
+Both `LegacyMessage` and `LoadedMessage` consist of
+    - `MessageHeader`
+    - vector of `Pubkey` of accounts used in the transaction
+    - `Hash` of recent block
+    - vector of `CompiledInstruction`
+    In addition `LoadedMessage` contains a vector of
+    `MessageAddressTableLookup` -- list of address table lookups to
+    load additional accounts for this transaction.
+
