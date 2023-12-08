@@ -187,6 +187,15 @@ Both `LegacyMessage` and `LoadedMessage` consist of
 
 Multiple results of `load_and_execute_transactions` are aggregated in
 the struct `LoadAndExecuteTransactionsOutput`
+ - `LoadAndExecuteTransactionsOutput` contains
+  - vector of `TransactionLoadResult`
+  - vector of `TransactionExecutionResult`
+  - vector of indexes of retriable transactions
+  - number of executed transactions
+  - number of executed non-vote transactions
+  - number of successfully executed transactions (no error)
+  - signature count (`u64`)
+  - error counters (`TransactionErrorMetrics`)
 
 Steps of `load_and_execute_transactions`
 
@@ -196,9 +205,23 @@ Steps of `load_and_execute_transactions`
    use*, the transaction may be retried at a later time and returned
    in the `LoadAndExecuteTransactionsOutput`.
 
+2. Check transactions, currently two checks
+   - check age
+     - TODO explain
+   - check status cache
+     - TODO explain
 
+3. Steps of preparation for execution
+   - filter executable program accounts and build program accounts map (explain)
+   - add builtin programs to program accounts map
+   - replenish program cache using the program accounts map (explain)
 
+4. Load accounts (explain) -- the result of this is loaded
+   transactions (explain)
 
+5. Execute each loaded transactions
+
+6. Prepare the results of loading and executing transactions.
 
 ## Open Questions
 
