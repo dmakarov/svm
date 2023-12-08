@@ -149,18 +149,22 @@ In bank context `load_and_execute_transactions` is called from
 from `load_execute_and_commit_transactions` which receives a batch of
 transactions from its caller.
 
-Input: `TransactionBatch`
+- Input: `TransactionBatch`
 
-`TransactionBatch` contains
-    - vector of `Result` lock_results -- purpose?
+ - `TransactionBatch`
+   : contains
+    - vector of `Result` lock_results -- this vector contains results
+      of locking the accounts used in the transactions of the
+      batch. When a batch is created the `account_db` is used to lock
+      the accounts involved in all the transactions of the batch.
     - a reference to Bank -- need to decouple from Bank
     - a slice of `SanitizedTransaction` wrapped in copy on write
-    - a boolean flag `needs_unlock`   -- purpose?
+    - a boolean flag `needs_unlock`   -- this field is only used when TransactionBatch is dropped and the locked accounts have to be unlocked.
 
-Of the above we should need only the slice of
-`SanitizedTransaction`. Let's analyze it next
+Of the above we should need only the slice of `SanitizedTransaction`. Let's analyze it next
 
-`SanitizedTransaction` contains
+ - `SanitizedTransaction`
+   : contains
     - a SanitizedMessage  -- explain
     - a Hash of the message
     - a boolean flag `is_simple_vote_tx` -- explain
@@ -178,6 +182,21 @@ Both `LegacyMessage` and `LoadedMessage` consist of
     In addition `LoadedMessage` contains a vector of
     `MessageAddressTableLookup` -- list of address table lookups to
     load additional accounts for this transaction.
+
+- Output: `LoadAndExecuteTransactionsOutput`
+
+Multiple results of `load_and_execute_transactions` are aggregated in
+the struct `LoadAndExecuteTransactionsOutput`
+
+Steps of `load_and_execute_transactions`
+
+1. Collect indexes of retriable transactions in the batch. This is
+   done by iterating over the results of locking the accounts of each
+   transaction. If the result is a recoverable error, such *account in
+   use*, the transaction may be retried at a later time and returned
+   in the `LoadAndExecuteTransactionsOutput`.
+
+
 
 
 
