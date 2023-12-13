@@ -223,6 +223,18 @@ Steps of `load_and_execute_transactions`
 
 6. Prepare the results of loading and executing transactions.
 
+   This includes the following steps for each transactions
+   1. dump flattened result to info log for an account which pubkey is
+      in the transaction's debug keys (one per transaction, it seems).
+   2. Collect logs of the transaction execution for each executed
+      transaction, unless Bank's `transaction_log_collector_config` is
+      set to `None`.
+   3. Finally, increment various statistical counters, and update
+      timings passed as a mutable reference to
+      `load_and_execute_transactions` in arguments. The counters are
+      packed in the struct `LoadAndExecuteTransactionsOutput`. What
+      should we do with these counters?
+
 ## Open Questions
 
 1. Many types used to define (transitively) `TransactionBatch` are
@@ -265,3 +277,6 @@ Questions about structure of SVM from Lucas' document (need to review and answer
    not?
 
 7. Is the BpfLoader part of the SVM? It is a program on the blockchain, not necessarily part of the VM?
+
+
+8. What is the purpose of `transaction_debug_keys` in Bank?
