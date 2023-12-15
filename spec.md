@@ -220,6 +220,51 @@ Steps of `load_and_execute_transactions`
    transactions (explain)
 
 5. Execute each loaded transactions
+   This is done in the method `Bank::execute_loaded_transaction`. The
+   method takes a `SanitizedTransaction` as input, LoadedTransaction
+   as input, output parameter, `ComputeBudget` and
+   `LoadedProgramsForTxBatch` as input, several configuration flags,
+   `ExecuteTimings`, and `TransactionErrorMetrics` as output
+   parameters. It returns `TransactionExecutionResult` value. This
+   method should be completely isolated from Bank.
+   1. Compute the sum of transaction account balances. This sum is
+      invariant of the transaction execution.
+   2. Obtain rent state of each account before the transaction
+      execution. This is later used in verifying the account state
+      changes. TODO: explain the state changes logic in plain English.
+   3. Create a new log_collector.  `LogCollector` is defined in
+      solana-program-runtime crate (`InvokeContext` is also there, so
+      this will be proper part of SVM).
+   4. Obtain last blockhash and lamports per signature. This
+      information is read from blockhash_queue maintained in Bank. The
+      information is taken in parameters to
+      `MessageProcessor::process_message`. How this will be migrated
+      to SVM?
+   5. Make two local variables that will be used as output parameters
+      of `MessageProcessor::process_message`. One will contain the
+      number of executed units (TODO: need to explain). Another is a
+      container of `LoadedProgramsForTxBatch`. The latter is
+      initialized with the slot (another dependency on `Bank`), and
+      the clone of environments of `programs_loaded_for_tx_batch`
+      (TODO: need to explain).
+   6. Call `MessageProcessor::process_message` to execute the
+      transaction. `MessageProcessor` is contained in
+      solana-program-runtime crate. The result of processing message
+      is either `ProcessedMessageInfo` which is an i64 wrapped in a
+      struct meaning the change in accounts data length, or a
+      `TransactionError`, if any of instructions failed to execute
+      correctly.
+   7. Verify transaction account state changes. TODO: explain.
+   8. Extract log messages.
+   9. Extract inner instructions (`Vec<Vec<InnerInstruction>>`).
+   10. Extract `ExecutionRecord` components from transaction context.
+   11. Check balances of accounts to match the sum of balances before
+       transaction execution.
+   12. Updated loaded transaction accounts to new accounts.
+   13. Extract changes in accounts data sizes
+   14. Extract return data
+   15. Return `TransactionExecutionResult` with wrapping the extracted
+       information in `TransactionExecutionDetails`.
 
 6. Prepare the results of loading and executing transactions.
 
@@ -234,6 +279,10 @@ Steps of `load_and_execute_transactions`
       `load_and_execute_transactions` in arguments. The counters are
       packed in the struct `LoadAndExecuteTransactionsOutput`. What
       should we do with these counters?
+
+The crate solana-program-runtime should be included in SVM
+completely. It contains `ComputeBudget`, `InvokeContext`,
+`MessageProcessor`, and other structs.
 
 ## Open Questions
 
@@ -270,7 +319,6 @@ Questions about structure of SVM from Lucas' document (need to review and answer
 
    Inner structs related to execution: `SanitizedMessage` may be moved to runtime and may belong in SVM. It is declared in solana_program::message and only used in transaction code.
 
-   Program-runtime is all part of SVM. Nothing should be moved out of there.
 
 6. Execution context data structures: `TransactionContext`,
    `InstructionContext` is defined in SDK, but is truly part of SVM or
