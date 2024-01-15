@@ -1,0 +1,138 @@
+\documentclass[svgnames]{standalone}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{fancyvrb}
+\usepackage{tikz-uml}
+\usetikzlibrary{positioning}
+
+\begin{document}
+
+\begin{tikzpicture}
+
+  \begin{umlpackage}{solana-runtime}
+
+    \umlclass[x=10]{LoadAndExecuteTransactionsOutput}{
+      +loaded\_transactions: Vec<TransactionLoadResult>\\
+      +execution\_results: Vec<TransactionExecutionResult>\\
+      +retryable\_transaction\_indexes: Vec<usize>\\
+      +executed\_transactions\_count: usize\\
+      +executed\_non\_vote\_transactions\_count: usize\\
+      +executed\_with\_successful\_result\_count: usize\\
+      +signature\_count: u64\\
+      +error\_counters: TransactionErrorMetrics
+    }{}
+
+    \umlclass[x=10,y=8]{Bank}{
+      rc : BankRC\\
+      builtin\_programs : HashSet<Pubkey>
+    }{
+      + \textbf{load\_and\_execute\_transactions}(\\
+        \&self,\\
+        batch: \&TransactionBatch,\\
+        max\_age: usize,\\
+        enable\_cpi\_recording: bool,\\
+        enable\_log\_recording: bool,\\
+        enable\_return\_data\_recording: bool,\\
+        timings: \&mut ExecuteTimings,\\
+        account\_overrides: Option<\&AccountOverrides>,\\
+        log\_messages\_bytes\_limit: Option<usize>\\
+        ) : LoadAndExecuteTransactionsOutput\\
+      + \textbf{check\_transactions}(\\
+        \&self,\\
+        sanitized\_txs: \&[impl core::borrow::Borrow<SanitizedTransaction>],\\
+        lock\_results: \&[Result<()>],\\
+        max\_age: usize,\\
+        error\_counters: \&mut TransactionErrorMetrics,\\
+        ) : Vec<TransactionCheckResult>\\
+      - \textbf{replenish\_program\_cache}(\\
+        \&self,\\
+        program\_accounts\_map: \&HashMap<Pubkey, (\&Pubkey, u64)>\\
+        ) : LoadedProgramsForTxBatch
+    }
+
+    \umlclass[y=8]{BankRc}{
+      +accounts: Arc<Accounts>\\
+      \#parent: RwLock<Option<Arc<Bank> > >\\
+      \#slot: Slot\\
+      \#bank\_id\_generator: Arc<AtomicU64>
+    }{}
+
+    \umlclass[y=12]{TransactionBatch}{
+      lock\_results: Vec<Result<()> >\\
+      bank: Bank\\
+      sanitized\_txs: Cow<[SanitizedTransaction]>\\
+      needs\_unlock: bool
+    }{}
+
+    \umlclass[y=2]{accounts}{
+    }{
+      + \textbf{load\_accounts}(\\
+      accounts\_db: \&AccountsDb,\\
+      ancestors: \&Ancestors,\\
+      txs: \&[SanitizedTransaction],\\
+      lock\_results: Vec<TransactionCheckResult>,\\
+      hash\_queue: \&BlockhashQueue,\\
+      error\_counters: \&mut TransactionErrorMetrics,\\
+      rent\_collector: \&RentCollector,\\
+      feature\_set: \&FeatureSet,\\
+      fee\_structure: \&FeeStructure,\\
+      account\_overrides: Option<\&AccountOverrides>,\\
+      in\_reward\_interval: RewardInterval,\\
+      program\_accounts: \&HashMap<Pubkey, (\&Pubkey, u64)>,\\
+      loaded\_programs: \&LoadedProgramsForTxBatch,\\
+      should\_collect\_rent: bool\\
+      ) : Vec<TransactionLoadResult>
+    }
+
+    \umldep{Bank}{LoadAndExecuteTransactionsOutput}
+    \umldep{Bank}{TransactionBatch}
+
+  \end{umlpackage}
+
+  \begin{umlpackage}[x=14,y=16]{solana-program-runtime}
+
+    \umlclass{ExecuteTimings}{
+      +metrics: Metrics\\
+      +details: ExecuteDetailsTimings\\
+      +execute\_accessories: ExecuteAccessoryTimings
+    }{
+      +accumulate(\&mut self, other: \&ExecuteTimings)
+    }
+
+  \end{umlpackage}
+
+  \begin{umlpackage}[y=16]{solana-accounts-db}
+
+    \umlclass{AccountOverrides}{
+      accounts: HashMap<Pubkey, AccountSharedData>
+    }{
+      + \textbf{set\_account}(\&mut self, pubkey: \&Pubkey, account: Option<AccountSharedData>)\\
+      + \textbf{set\_slot\_history}(\&mut self, slot\_history: Option<AccountSharedData>)\\
+      + \textbf{get}(\&self, pubkey: \&Pubkey) : Option<\&AccountSharedData>
+    }
+
+  \end{umlpackage}
+
+  \begin{umlpackage}[x=8,y=20]{solana-sdk}
+
+    \umlclass{SanitizedTransaction}{
+      message: SanitizedMessage\\
+      message\_hash: Hash\\
+      is\_simple\_vote\_tx: bool\\
+      signatures: Vec<Signature>
+    }{}
+
+  \end{umlpackage}
+
+
+  \umlimport[geometry=--, name=useaccdb]{solana-runtime}{solana-accounts-db}
+  \umlimport[name=useprgrt]{solana-runtime}{solana-program-runtime}
+  \umlimport[name=usesdk]{solana-runtime}{solana-sdk}
+  \umlimport[name=usesdk]{solana-accounts-db}{solana-program-runtime}
+  \umlimport[name=usesdk]{solana-accounts-db}{solana-sdk}
+  \umlimport[name=usesdk]{solana-program-runtime}{solana-sdk}
+
+\end{tikzpicture}
+
+\end{document}

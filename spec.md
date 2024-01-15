@@ -144,6 +144,8 @@ should not be part of the SVM.
 
 Load and execute transactions.
 
+![class diagram](/diagrams/classdiag.png "Logical structure supporting load_and_execute_transactions")
+
 In bank context `load_and_execute_transactions` is called from
 `simulate_transaction` where a single transaction is executed, and
 from `load_execute_and_commit_transactions` which receives a batch of
