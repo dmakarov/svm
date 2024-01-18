@@ -51,7 +51,7 @@
         ) : LoadedProgramsForTxBatch
     }
 
-    \umlclass[y=8]{BankRc}{
+    \umlclass[y=9]{BankRc}{
       +accounts: Arc<Accounts>\\
       \#parent: RwLock<Option<Arc<Bank> > >\\
       \#slot: Slot\\
@@ -85,8 +85,10 @@
       ) : Vec<TransactionLoadResult>
     }
 
+    \umldep[geometry=-|, anchors=-20 and 90]{Bank}{accounts}
     \umldep{Bank}{LoadAndExecuteTransactionsOutput}
     \umldep{Bank}{TransactionBatch}
+    \umlunicompo[geometry=-|, anchors=-10 and -90, arg=rc, mult=1]{Bank}{BankRc}
 
   \end{umlpackage}
 
