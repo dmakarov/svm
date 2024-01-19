@@ -95,11 +95,18 @@
   \begin{umlpackage}[x=14,y=16]{solana-program-runtime}
 
     \umlclass{ExecuteTimings}{
-      +metrics: Metrics\\
-      +details: ExecuteDetailsTimings\\
-      +execute\_accessories: ExecuteAccessoryTimings
+      + metrics: Metrics\\
+      + details: ExecuteDetailsTimings\\
+      + execute\_accessories: ExecuteAccessoryTimings
     }{
-      +accumulate(\&mut self, other: \&ExecuteTimings)
+      + accumulate(\&mut self, other: \&ExecuteTimings)
+    }
+
+    \umlclass[y=3]{LoadedProgramsForTxBatch}{
+      entries: HashMap<Pubkey, Arc<LoadedProgram>>\\
+      slot: Slot\\
+      + environments: ProgramRuntimeEnvironments
+    }{
     }
 
   \end{umlpackage}
@@ -114,9 +121,26 @@
       + \textbf{get}(\&self, pubkey: \&Pubkey) : Option<\&AccountSharedData>
     }
 
+    \umlclass[y=3]{TransactionExecutionResult}{
+      details: TransactionExecutionDetails\\
+      programs\_modified\_by\_tx: Box<LoadedProgramsForTxBatch>
+    }{
+    }
+
+    \umlclass[y=6]{TransactionExecutionDetails}{
+      + status: transaction::Result<()>\\
+      + log\_messages: Option<Vec<String> >\\
+      + inner\_instructions: Option<InnerInstructionsList>\\
+      + durable\_nonce\_fee: Option<DurableNonceFee>\\
+      + return\_data: Option<TransactionReturnData>\\
+      + executed\_units: u64\\
+      + accounts\_data\_len\_delta: i64
+    }{
+    }
+
   \end{umlpackage}
 
-  \begin{umlpackage}[x=8,y=20]{solana-sdk}
+  \begin{umlpackage}[x=12,y=23]{solana-sdk}
 
     \umlclass{SanitizedTransaction}{
       message: SanitizedMessage\\
