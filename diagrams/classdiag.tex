@@ -23,9 +23,10 @@
       +error\_counters: TransactionErrorMetrics
     }{}
 
-    \umlclass[x=10,y=8]{Bank}{
-      rc : BankRC\\
-      builtin\_programs : HashSet<Pubkey>
+    \umlclass[x=12,y=8]{Bank}{
+      + rc : BankRC\\
+      builtin\_programs : HashSet<Pubkey>\\
+      + loaded\_programs\_cache: Arc<RwLock<LoadedPrograms<BankForks> > >
     }{
       + \textbf{load\_and\_execute\_transactions}(\\
         \&self,\\
@@ -103,9 +104,34 @@
     }
 
     \umlclass[y=3]{LoadedProgramsForTxBatch}{
-      entries: HashMap<Pubkey, Arc<LoadedProgram>>\\
+      entries: HashMap<Pubkey, Arc<LoadedProgram> >\\
       slot: Slot\\
       + environments: ProgramRuntimeEnvironments
+    }{
+    }
+
+    \umlclass[y=7,x=10]{LoadedProgram}{
+      + program: LoadedProgramType\\
+      + account\_size: usize\\
+      + deployment\_slot: Slot\\
+      + effective\_slot: Slot\\
+      + maybe\_expiration\_slot: Option<Slot>\\
+      + tx\_usage\_counter: AtomicU64\\
+      + ix\_usage\_counter: AtomicU64\\
+      + latest\_access\_slot: AtomicU64
+    }{
+    }
+
+    \umlclass[y=7,template=FG:\ ForkGraph]{LoadedPrograms}{
+      entries: HashMap<Pubkey, SecondLevel>\\
+      + latest\_root\_slot: Slot\\
+      + latest\_root\_epoch: Epoch\\
+      + environments: ProgramRuntimeEnvironments\\
+      + upcoming\_environments: Option<ProgramRuntimeEnvironments>\\
+      + programs\_to\_recompile: Vec<(Pubkey, Arc<LoadedProgram>)>\\
+      + stats: Stats\\
+      + fork\_graph: Option<Arc<RwLock<FG> > >\\
+      + loading\_task\_waiter: Arc<LoadingTaskWaiter>
     }{
     }
 
@@ -140,7 +166,7 @@
 
   \end{umlpackage}
 
-  \begin{umlpackage}[x=12,y=23]{solana-sdk}
+  \begin{umlpackage}[x=12,y=30]{solana-sdk}
 
     \umlclass{SanitizedTransaction}{
       message: SanitizedMessage\\
