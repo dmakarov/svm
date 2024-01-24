@@ -218,8 +218,22 @@ Steps of `load_and_execute_transactions`
    - add builtin programs to program accounts map
    - replenish program cache using the program accounts map (explain)
 
-4. Load accounts (explain) -- the result of this is loaded
-   transactions (explain)
+4. Load accounts (call to `load_accounts` function)
+   - For each `SanitizedTransaction` and `TransactionCheckResult`, we:
+        - Calculate the number of signatures in transaction and its cost.
+        - Call `load_transaction_accounts`
+            - The function is interwined with the struct `CompiledInstruction`
+            - Load accounts from accounts DB
+            - Extract data from accounts
+            - Verify if we've reached the maximum account data size
+            - Validate the fee payer and the loaded accounts
+            - Validate the programs accounts that have been loaded and checks if they are builtin programs.
+            - Return `struct LoadedTransaction` containing the accounts (pubkey and data), 
+              indices to the excutabe accounts in `TransactionContext` (or `InstructionContext`),
+              the transaction rent, and the `struct RentDebit`.
+            - Generate a `NonceFull` struct (holds fee subtracted nonce info) when possible, `None` otherwise.
+    - Returns `TransactionLoadedResult`, a tuple containing the `LoadTransaction` we obtained from `loaded_transaction_accounts`,
+      and a `Option<NonceFull>`.
 
 5. Execute each loaded transactions
    This is done in the method `Bank::execute_loaded_transaction`. The
