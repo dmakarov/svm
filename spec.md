@@ -300,6 +300,42 @@ The crate solana-program-runtime should be included in SVM
 completely. It contains `ComputeBudget`, `InvokeContext`,
 `MessageProcessor`, and other structs.
 
+## Factoring out unnecessary dependencies
+
+`TransactionBatchProcessor` is a new struct factored out of the `Bank` struct
+to expose the dependencies between transaction processing and `Bank`.
+
+A callback mechanism, implemented as the
+`TransactionProcessingCallback` trait, is used to eliminate the
+dependency on reward interval in SVM.  When transaction accounts are
+loaded one of the checks performed on the accounts is to identify and
+to block transactions that attempt to update stake accounts inside a
+reward interval. The SVM should be agnostic to most Solana specific
+restrictions, therefore the explicit check is abstracted by a call to
+a `check_account_access` method of the new
+`TransactionProcessingCallback` trait.
+
+Epoch scheduling is only needed to find the first slot in the epoch,
+and doesn't need to be a dependency of transaction batch processing.
+The slot could be added as a parameter when
+`TransactionBatchProcessor` is created.
+
+Access to `accounts` field of the bank is replaced by the get_account()
+method of `TransactionProcessingCallback` trait.
+
+## Differences in the implementation of SVM that affect transaction execution
+
+In this section we describe how the SVM implementation diverged from
+the pre-SVM logic of transaction execution. For example, some changes
+in the SVM code may affect the order in which errors of failing
+transactions are reported. A transaction may fail for more than a
+single reason. The error reporting for a failing transaction depends
+on the order in which various checks on the transaction are
+performed. Splitting the SVM out from the monorepo results in changes
+to the order some checks are performed on transactions.  We explain
+such and other cases of visible side-effects in this section.
+(Currently no such changes have been done).
+
 ## Open Questions
 
 1. Many types used to define (transitively) `TransactionBatch` are
