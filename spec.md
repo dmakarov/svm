@@ -209,9 +209,11 @@ Steps of `load_and_execute_transactions`
 
 2. Check transactions, currently two checks
    - check age
-     - TODO explain
+     - If the locked results for a transaction are not an error, we:
+         - check if the transaction's blockhah is valid for the `max_age` OR
+         - verify if the transaction message has a durable nonce that is authorized, if the transaction nonce is not advanceable.
    - check status cache
-     - TODO explain
+     - Checks if the transaction has already been processed.
 
 3. Steps of preparation for execution
    - filter executable program accounts and build program accounts map (explain)
