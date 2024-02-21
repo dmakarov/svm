@@ -273,7 +273,7 @@ Steps of `load_and_execute_transactions`
       `TransactionError`, if any of instructions failed to execute
       correctly.
    7. Verify transaction accounts' `RentState` changes (`verify_changes` function)
-      - If the account `RentState` pre-transaction processing is rent exempt of unitiliazed, the verification will pass.
+      - If the account `RentState` pre-transaction processing is rent exempt or unitiliazed, the verification will pass.
       - If the account `RentState` pre-transaction is rent paying:
          - A transition to a state uninitialized or rent exempt post-transaction is not allowed.
          - If its size has changed or its balance has increased, it cannot remain rent paying.
