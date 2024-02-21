@@ -260,12 +260,14 @@ Steps of `load_and_execute_transactions`
       to SVM?
    5. Make two local variables that will be used as output parameters
       of `MessageProcessor::process_message`. One will contain the
-      number of executed units (TODO: need to explain). Another is a
-      container of `LoadedProgramsForTxBatch`. The latter is
-      initialized with the slot (another dependency on `Bank`), and
+      number of executed units (the number of compute unites consumed 
+      in the transaction). Another is a container of `LoadedProgramsForTxBatch`. 
+      The latter is initialized with the slot (another dependency on `Bank`), and
       the clone of environments of `programs_loaded_for_tx_batch`
-      (TODO: need to explain).
-   6. Call `MessageProcessor::process_message` to execute the
+         - `programs_loaded_for_tx_batch` contains a reference to all the `LoadedProgram`s
+            necessary for the transaction. It maintains an `Arc` to the programs in the global
+            `LoadedPrograms` data structure.
+      6. Call `MessageProcessor::process_message` to execute the
       transaction. `MessageProcessor` is contained in
       solana-program-runtime crate. The result of processing message
       is either `ProcessedMessageInfo` which is an i64 wrapped in a
