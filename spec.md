@@ -249,7 +249,7 @@ Steps of `load_and_execute_transactions`
       invariant of the transaction execution.
    2. Obtain rent state of each account before the transaction
       execution. This is later used in verifying the account state
-      changes. TODO: explain the state changes logic in plain English.
+      changes (step #7). 
    3. Create a new log_collector.  `LogCollector` is defined in
       solana-program-runtime crate (`InvokeContext` is also there, so
       this will be proper part of SVM).
@@ -272,7 +272,11 @@ Steps of `load_and_execute_transactions`
       struct meaning the change in accounts data length, or a
       `TransactionError`, if any of instructions failed to execute
       correctly.
-   7. Verify transaction account state changes. TODO: explain.
+   7. Verify transaction accounts' `RentState` changes (`verify_changes` function)
+      - If the account `RentState` pre-transaction processing is rent exempt or unitiliazed, the verification will pass.
+      - If the account `RentState` pre-transaction is rent paying:
+         - A transition to a state uninitialized or rent exempt post-transaction is not allowed.
+         - If its size has changed or its balance has increased, it cannot remain rent paying.
    8. Extract log messages.
    9. Extract inner instructions (`Vec<Vec<InnerInstruction>>`).
    10. Extract `ExecutionRecord` components from transaction context.
