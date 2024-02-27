@@ -3,19 +3,10 @@
 # Vision
 
 Several components of the Solana Validator are involved in processing
-of a transaction (or a batch of transactions). These components can be
-factored out to decouple the transaction processing components from
-other components of the Solana Validator with the goal of improving
-the software architecture of the system as a whole by better
-modularization and well-defined interfaces between the Solana
-Validator components. The refactoring is non-functional in the sense
-that the protocol currently implemented by the Solana Validator is
-uneffected by changes to the transaction processing code.
-
-Collectively the components responsible for transaction execution are
-designated as Solana Virtual Machine (SVM). SVM packaged as a
-stand-alone library can be used in applications outside the Solana
-Validator.
+of a transaction (or a batch of transactions).  Collectively the
+components responsible for transaction execution are designated as
+Solana Virtual Machine (SVM). SVM packaged as a stand-alone library
+can be used in applications outside the Solana Validator.
 
 This document represents specification of the SVM. It covers the API
 of using SVM in projects unrelated to Solana Validator and the
@@ -61,7 +52,7 @@ potential interested users
     simulateTransaction requires replaying the transactions and have
     access to necessary account data.
 
-- **SVM-based Avalanche subne**t
+- **SVM-based Avalanche subnet**
 
     The SVM would need to be isolated to run within a subnet since the
     consensus and networking functionality would rely on Avalanche
