@@ -110,9 +110,17 @@ Do different use cases change the functional requirements for SVM?
 What are our use cases (not clear from the list of high level
 applications)? Process a transaction batch is that all?
 
-Currently, the single entry point for the SVM is the function
-`load_and_execute_transactions` defined in bank.rs (may become a
-method of SVM struct).
+The interface to SVM is represented by the
+`transaction_processor::TransactionBatchProcessor` struct.  To create
+a `TransactionBatchProcessor` object the client need to specify the
+`slot`, `epoch`, `epoch_schedule`, `fee_structure`, `runtime_config`,
+and `loaded_programs_cache`. We'll explain these parameter in detail.
+
+The main entry point to the SVM is the method
+`load_and_execute_sanitized_transactions`. In addition
+`TransactionBatchProcessor` provides two public utility methods
+`filter_executable_program_accounts` and `load_program`, used
+externally for testing and internally by SVM.
 
 # Functional Model
 
