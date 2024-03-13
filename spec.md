@@ -118,9 +118,41 @@ and `loaded_programs_cache`. We'll explain these parameter in detail.
 
 The main entry point to the SVM is the method
 `load_and_execute_sanitized_transactions`. In addition
-`TransactionBatchProcessor` provides two public utility methods
-`filter_executable_program_accounts` and `load_program`, used
-externally for testing and internally by SVM.
+`TransactionBatchProcessor` provides a utility method
+`load_program_with_pubkey`, used in Bank to load program with a
+specific pubkey from loaded programs cache, and update the program's
+access slot as a side-effect.
+
+The method `load_and_execute_sanitized_transactions` takes the
+following arguments
+    - `TransactionProcessingCallback` is a trait that enables access
+      to data available from accounts-db and from Bank,
+    - a slice of `SanitizedTransaction`
+      - `SanitizedTransaction` contains
+        - `SanitizedMessage` is an enum with two kinds of messages
+          - `LegacyMessage` and `LoadedMessage`
+            Both `LegacyMessage` and `LoadedMessage` consist of
+            - `MessageHeader`
+            - vector of `Pubkey` of accounts used in the transaction
+            - `Hash` of recent block
+            - vector of `CompiledInstruction`
+            In addition `LoadedMessage` contains a vector of
+            `MessageAddressTableLookup` -- list of address table lookups to
+            load additional accounts for this transaction.
+        - a Hash of the message
+        - a boolean flag `is_simple_vote_tx` -- explain
+        - a vector of `Signature`  -- explain which signatures are in this vector
+
+The method returns a value of
+`LoadAndExecuteSanitizedTransactionsOutput` which consists of two
+vectors
+    - a vector of `TransactionLoadResult`, and
+    - a vector of `TransactionExecutionResult`.
+
+
+`validate_fee_payer` is used in core::banking_stage::consumer module.
+`AccountOverrides` is used in Bank.  `RentState` is used in Bank.
+`TransactionErrorMetrics` is used in `core` and `runtime` crates.
 
 # Functional Model
 
@@ -137,54 +169,11 @@ objects passed to it. The results of transaction execution are
 consumed by bank in Solana Validator use case. However, bank structure
 should not be part of the SVM.
 
-
-# Work area
-*(stuff from here will be moved up to proper sections when settles down)*
-
-Load and execute transactions.
-
-![class diagram](/diagrams/classdiag.png "Logical structure supporting load_and_execute_transactions")
-
 In bank context `load_and_execute_transactions` is called from
 `simulate_transaction` where a single transaction is executed, and
 from `load_execute_and_commit_transactions` which receives a batch of
 transactions from its caller.
 
-- Input: `TransactionBatch`
-
- - `TransactionBatch`
-   : contains
-    - vector of `Result` lock_results -- this vector contains results
-      of locking the accounts used in the transactions of the
-      batch. When a batch is created the `account_db` is used to lock
-      the accounts involved in all the transactions of the batch.
-    - a reference to Bank -- need to decouple from Bank
-    - a slice of `SanitizedTransaction` wrapped in copy on write
-    - a boolean flag `needs_unlock`   -- this field is only used when TransactionBatch is dropped and the locked accounts have to be unlocked.
-
-Of the above we should need only the slice of `SanitizedTransaction`. Let's analyze it next
-
- - `SanitizedTransaction`
-   : contains
-    - a SanitizedMessage  -- explain
-    - a Hash of the message
-    - a boolean flag `is_simple_vote_tx` -- explain
-    - a vector of `Signature`  -- explain which signatures are in this vector
-
-`SanitizedMessage` is an enum with two kinds of messages
-    - `LegacyMessage`
-    - and `LoadedMessage`
-
-Both `LegacyMessage` and `LoadedMessage` consist of
-    - `MessageHeader`
-    - vector of `Pubkey` of accounts used in the transaction
-    - `Hash` of recent block
-    - vector of `CompiledInstruction`
-    In addition `LoadedMessage` contains a vector of
-    `MessageAddressTableLookup` -- list of address table lookups to
-    load additional accounts for this transaction.
-
-- Output: `LoadAndExecuteTransactionsOutput`
 
 Multiple results of `load_and_execute_transactions` are aggregated in
 the struct `LoadAndExecuteTransactionsOutput`
@@ -248,7 +237,7 @@ Steps of `load_and_execute_transactions`
       invariant of the transaction execution.
    2. Obtain rent state of each account before the transaction
       execution. This is later used in verifying the account state
-      changes (step #7). 
+      changes (step #7).
    3. Create a new log_collector.  `LogCollector` is defined in
       solana-program-runtime crate (`InvokeContext` is also there, so
       this will be proper part of SVM).
@@ -259,8 +248,8 @@ Steps of `load_and_execute_transactions`
       to SVM?
    5. Make two local variables that will be used as output parameters
       of `MessageProcessor::process_message`. One will contain the
-      number of executed units (the number of compute unites consumed 
-      in the transaction). Another is a container of `LoadedProgramsForTxBatch`. 
+      number of executed units (the number of compute unites consumed
+      in the transaction). Another is a container of `LoadedProgramsForTxBatch`.
       The latter is initialized with the slot (another dependency on `Bank`), and
       the clone of environments of `programs_loaded_for_tx_batch`
          - `programs_loaded_for_tx_batch` contains a reference to all the `LoadedProgram`s
@@ -303,9 +292,11 @@ Steps of `load_and_execute_transactions`
       packed in the struct `LoadAndExecuteTransactionsOutput`. What
       should we do with these counters?
 
-The crate solana-program-runtime should be included in SVM
-completely. It contains `ComputeBudget`, `InvokeContext`,
-`MessageProcessor`, and other structs.
+
+# Work area
+*(stuff from here will be moved up to proper sections when settles down)*
+
+![class diagram](/diagrams/classdiag.png "Logical structure supporting load_and_execute_transactions")
 
 ## Factoring out unnecessary dependencies
 
