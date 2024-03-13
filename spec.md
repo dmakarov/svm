@@ -142,6 +142,15 @@ following arguments
         - a Hash of the message
         - a boolean flag `is_simple_vote_tx` -- explain
         - a vector of `Signature`  -- explain which signatures are in this vector
+    - a mutable slice of `TransactionCheckResult`
+    - a mutable reference to `TransactionErrorMetrics`
+    - a value of `ExecutionRecordingConfig` configuration parameters
+    - a mutable reference to `ExecuteTimings`
+    - an optional reference to `AccountOverrides`
+    - an iterator of `Pubkey` that represents builtin programs
+    - an optional `usize` limit on the size of log messages in bytes
+    - a boolean flag that instruct the function to only load the
+      programs and do not execute the transactions.
 
 The method returns a value of
 `LoadAndExecuteSanitizedTransactionsOutput` which consists of two
