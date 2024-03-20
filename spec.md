@@ -1,6 +1,6 @@
 # Solana Virtual Machine specification
 
-# Vision
+# Introduction
 
 Several components of the Solana Validator are involved in processing
 of a transaction (or a batch of transactions).  Collectively the
@@ -15,28 +15,26 @@ data flow, data structures, and algorithms involved in the execution
 of transactions. The document’s target audience includes both external
 users and the developers of the SVM.
 
-## Applications (or use cases)
+## Use cases
 
-The following possible applications for SVM were collected from
-potential interested users
+We envision the following applications for SVM
 
 - **Transaction execution in Solana Validator**
 
     This is the primary use case for the SVM. It remains a major
-    component of the Solana Validator, but with clear interface and
+    component of the Agave Validator, but with clear interface and
     isolated from dependencies on other components.
 
     The SVM is currently viewed as realizing two stages of the
     Transaction Engine Execution pipeline as described in Solana
     Architecture documentation
     [https://docs.solana.com/validator/runtime#execution](https://docs.solana.com/validator/runtime#execution),
-    namely ‘load accounts’ and ‘execute’ stages *(confirmation
-    needed)*
+    namely ‘load accounts’ and ‘execute’ stages.
 
 - **SVM Rollups**
 
     Rollups that need to execute the block but don’t need the other
-    components of the validator can benefit from this as it can reduce
+    components of the validator can benefit from SVM as it can reduce
     hardware requirements and decentralize the network. This is
     especially useful for Ephemeral Rollups since the cost of compute
     will be higher as a new rollup is created for every user session
@@ -75,8 +73,7 @@ context in which the SVM operates for each use-case.
 # System Context
 
 In this section SVM is represented as a single entity. We describe its
-interfaces to the parts of the Solana Validator external to SVM, even
-if at the time of writing they are intertwined with the SVM.
+interfaces to the parts of the Solana Validator external to SVM.
 
 SVM is an integral part of Solana Validator. It is used to process
 transaction batches on a single thread. As such it is invoked by a
@@ -84,9 +81,7 @@ bank and produces transaction results consumed by the bank.
 
 In the context of Solana Validator the main entity external to SVM is
 bank. It creates an SVM, submits transactions for execution and
-receives results of transaction execution from SVM. (currently SVM
-doesn’t exist as a separate data structure, this document should
-define it in the functonal model section).
+receives results of transaction execution from SVM.
 
 [SVM Context diagram should be added]
 
@@ -99,11 +94,9 @@ Functional Requirements for the SVM.
 
 Non-functional requirements: testability (what else - performance, how to measure?)
 
-ExecutionRecord is only used in bank.rs
-
 ## Interfaces
 
-In this section we describe to API of using the SVM both in Solana
+In this section we describe the API of using the SVM both in Solana
 Validator and in third-party applications.
 
 Do different use cases change the functional requirements for SVM?
@@ -114,14 +107,16 @@ The interface to SVM is represented by the
 `transaction_processor::TransactionBatchProcessor` struct.  To create
 a `TransactionBatchProcessor` object the client need to specify the
 `slot`, `epoch`, `epoch_schedule`, `fee_structure`, `runtime_config`,
-and `loaded_programs_cache`. We'll explain these parameter in detail.
+and `program_cache`. We'll explain these parameter in detail.
 
 The main entry point to the SVM is the method
 `load_and_execute_sanitized_transactions`. In addition
-`TransactionBatchProcessor` provides a utility method
-`load_program_with_pubkey`, used in Bank to load program with a
-specific pubkey from loaded programs cache, and update the program's
-access slot as a side-effect.
+`TransactionBatchProcessor` provides utility methods
+    - `load_program_with_pubkey`, used in Bank to load program with a
+      specific pubkey from loaded programs cache, and update the program's
+      access slot as a side-effect;
+    - `program_modification_slot`, used in Bank to find the slot in
+      which the program was most recently modified.
 
 The method `load_and_execute_sanitized_transactions` takes the
 following arguments
@@ -227,7 +222,7 @@ Steps of `load_and_execute_transactions`
             - Verify if we've reached the maximum account data size
             - Validate the fee payer and the loaded accounts
             - Validate the programs accounts that have been loaded and checks if they are builtin programs.
-            - Return `struct LoadedTransaction` containing the accounts (pubkey and data), 
+            - Return `struct LoadedTransaction` containing the accounts (pubkey and data),
               indices to the excutabe accounts in `TransactionContext` (or `InstructionContext`),
               the transaction rent, and the `struct RentDebit`.
             - Generate a `NonceFull` struct (holds fee subtracted nonce info) when possible, `None` otherwise.
